@@ -148,7 +148,7 @@ float result_expression(Expression expr) {
         case '*':
             return expr.operand1 * expr.operand2;
         case '/':
-            return expr.operand1 / expr.operand2;
+            return (float) expr.operand1 / (float) expr.operand2;
         default:
             printf("Error: Bad operator\n");
             return 0;
