@@ -48,14 +48,11 @@ int main(int argc, char* argv[]) {
 
     initialize_buffer(&buffer);
 
-    // Expression expr = make_expression(1);
-    // printf("Producer %d -> %d %c %d = %f -> Consumed by %d\n", expr.producer_id, expr.operand1, expr.operator, expr.operand2, expr.result, 1);
+    Expression expr = make_expression(1);
+    add_expression(expr);
+    expr = get_expression();
+    printf("Producer %d -> %d %c %d = %f -> Consumed by %d\n", expr.producer_id, expr.operand1, expr.operator, expr.operand2, expr.result, 1);
 
-    pthread_create(&p1, NULL, &producer, (void *) 1);
-
-
-    
-    pthread_join(p1, NULL);
 
     cleanup_buffer(&buffer);
 
@@ -65,11 +62,11 @@ int main(int argc, char* argv[]) {
 // -- Producer / Consumer methods --
 
 void *producer(void *arg) {
-    int id = *(int *)arg; // Pass in the thread number as a void ptr
+    int prod_id = *(int *)arg; // Pass in the thread number as a void ptr
     printf("Hello from the thread\n");
     // Each thread makes 10 expressions
     for (int i = 0; i < 10; ++i) {
-        Expression expr = make_expression(id); //Get a random expression
+        Expression expr = make_expression(prod_id); //Get a random expression
         // add_expression(expr);
     }
 
@@ -119,8 +116,6 @@ void add_expression(Expression expr) {
     while (buffer.count >= BUFFER_SIZE) { // If the buffer is full
         pthread_cond_wait(&buffer.not_full, &buffer.mutex); //Wait for the not full signal
     }
-
-    printf("%d", buffer.in);
 
     buffer.expressions[buffer.in] = expr; // Add expression to the array
     buffer.in = (buffer.in + 1) % BUFFER_SIZE; // Increment the 'in' index 
