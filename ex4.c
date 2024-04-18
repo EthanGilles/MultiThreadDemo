@@ -47,12 +47,20 @@ int main(int argc, char* argv[]) {
     pthread_t p1, p2, c1, c2;
 
     initialize_buffer(&buffer);
+    
+    int t1 = 1;
+    int t2 = 2;
 
-    Expression expr = make_expression(1);
-    add_expression(expr);
-    expr = get_expression();
-    printf("Producer %d -> %d %c %d = %f -> Consumed by %d\n", expr.producer_id, expr.operand1, expr.operator, expr.operand2, expr.result, 1);
 
+    pthread_create(&p1, NULL, &producer, (void * ) &t1);
+    pthread_create(&c1, NULL, &consumer, (void * ) &t1);
+    pthread_create(&p2, NULL, &producer, (void * ) &t2);
+    pthread_create(&c2, NULL, &consumer, (void * ) &t2);
+
+    pthread_join(p1, NULL);
+    pthread_join(c1, NULL);
+    pthread_join(p2, NULL);
+    pthread_join(c2, NULL);
 
     cleanup_buffer(&buffer);
 
@@ -63,11 +71,13 @@ int main(int argc, char* argv[]) {
 
 void *producer(void *arg) {
     int prod_id = *(int *)arg; // Pass in the thread number as a void ptr
-    printf("Hello from the thread\n");
+    
+    srand(time(NULL));
+
     // Each thread makes 10 expressions
     for (int i = 0; i < 10; ++i) {
         Expression expr = make_expression(prod_id); //Get a random expression
-        // add_expression(expr);
+        add_expression(expr);
     }
 
     return NULL;
@@ -81,7 +91,7 @@ void *consumer(void *arg) {
         Expression expr = get_expression(); //Grab an expression from the buffer
 
         // Print the expression and result
-        printf("Producer %d -> %d %c %d = %f -> Consumed by %d", expr.producer_id, expr.operand1, expr.operator, expr.operand2, expr.result, id);
+        printf("Producer %d -> %d %c %d = %f -> Consumed by %d\n", expr.producer_id, expr.operand1, expr.operator, expr.operand2, expr.result, id);
     }
 
     return NULL;
@@ -127,8 +137,7 @@ void add_expression(Expression expr) {
 }
 
 //Makes a random expression
-Expression make_expression(int prod) {
-    srand(time(0)); // Set seed to be random based on the time
+Expression make_expression(int prod) { 
     Expression expr;
     expr.operand1 = (rand() % 50) + 1; //set to be a random number from 1-50
     expr.operand2 = (rand() % 50) + 1;
@@ -156,7 +165,6 @@ float result_expression(Expression expr) {
 }
 
 char rand_op() {
-    srand(time(0));
     char operators[] = {'+', '-', '*', '/'};
     int index = rand() % 4;
     return operators[index];
