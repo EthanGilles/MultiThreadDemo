@@ -4,6 +4,7 @@
 #include <time.h>
 
 #define BUFFER_SIZE 10
+#define THREAD_NUM 10
 
 // Expression struct
 typedef struct { 
@@ -44,24 +45,33 @@ void cleanup_buffer(Buffer *buffer);
 Buffer buffer;
 
 int main(int argc, char* argv[]) {
+    // Declare all threads
     pthread_t p1, p2, c1, c2;
 
+    //Get buffer ready
     initialize_buffer(&buffer);
-    
+
+    //Thread numbers 
     int t1 = 1;
     int t2 = 2;
 
+    // Get a random seed
+    srand(time(NULL));
 
+    // Create 4 threads
     pthread_create(&p1, NULL, &producer, (void * ) &t1);
     pthread_create(&c1, NULL, &consumer, (void * ) &t1);
     pthread_create(&p2, NULL, &producer, (void * ) &t2);
     pthread_create(&c2, NULL, &consumer, (void * ) &t2);
 
+
+    // Wait here for all threads to finish
     pthread_join(p1, NULL);
     pthread_join(c1, NULL);
     pthread_join(p2, NULL);
     pthread_join(c2, NULL);
 
+    // Destroy the memory buffer
     cleanup_buffer(&buffer);
 
     return 0;
@@ -71,12 +81,13 @@ int main(int argc, char* argv[]) {
 
 void *producer(void *arg) {
     int prod_id = *(int *)arg; // Pass in the thread number as a void ptr
-    
-    srand(time(NULL));
 
     // Each thread makes 10 expressions
-    for (int i = 0; i < 10; ++i) {
-        Expression expr = make_expression(prod_id); //Get a random expression
+    for (int i = 0; i < THREAD_NUM; i++) {
+        //Make a random expression
+        Expression expr = make_expression(prod_id); 
+
+        //Add it to the buffer
         add_expression(expr);
     }
 
@@ -87,13 +98,13 @@ void *consumer(void *arg) {
     int id = *(int *)arg; // Pass in thread number as a void ptr
 
     // Each thread consumes 10 expressions
-    for (int i = 0; i < 10; ++i) {  
-        Expression expr = get_expression(); //Grab an expression from the buffer
+    for (int i = 0; i < THREAD_NUM; i++) {  
+        //Grab an expression from the buffer
+        Expression expr = get_expression(); 
 
         // Print the expression and result
         printf("Producer %d -> %d %c %d = %f -> Consumed by %d\n", expr.producer_id, expr.operand1, expr.operator, expr.operand2, expr.result, id);
     }
-
     return NULL;
 }
 
@@ -164,6 +175,7 @@ float result_expression(Expression expr) {
     }
 }
 
+// Choose a random operator for the expression
 char rand_op() {
     char operators[] = {'+', '-', '*', '/'};
     int index = rand() % 4;
@@ -172,7 +184,6 @@ char rand_op() {
 
 // -- Buffer methods --
 
-// 
 void initialize_buffer(Buffer *buffer) {
     buffer->count = 0; // Init everything
     buffer->in = 0;
