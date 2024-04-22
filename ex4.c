@@ -4,7 +4,7 @@
 #include <time.h>
 
 #define BUFFER_SIZE 10
-#define THREAD_NUM 10
+#define EXPR_COUNT 10
 
 // Expression struct
 typedef struct { 
@@ -33,13 +33,14 @@ void *consumer(void *arg);
 
 void add_expression(Expression expr);
 Expression get_expression();
-Expression make_expression();
+Expression make_expression(int prod);
 
 float result_expression(Expression expr);
 char rand_op(); // random operator
 
 void initialize_buffer(Buffer *buffer);
 void cleanup_buffer(Buffer *buffer);
+
 // Global variables
 
 Buffer buffer;
@@ -58,12 +59,13 @@ int main(int argc, char* argv[]) {
     // Get a random seed
     srand(time(NULL));
 
-    // Create 4 threads
+    // Create 2 Producers
     pthread_create(&p1, NULL, &producer, (void * ) &t1);
-    pthread_create(&c1, NULL, &consumer, (void * ) &t1);
     pthread_create(&p2, NULL, &producer, (void * ) &t2);
-    pthread_create(&c2, NULL, &consumer, (void * ) &t2);
 
+    // Create 2 Consumers
+    pthread_create(&c1, NULL, &consumer, (void * ) &t1);
+    pthread_create(&c2, NULL, &consumer, (void * ) &t2);
 
     // Wait here for all threads to finish
     pthread_join(p1, NULL);
@@ -83,7 +85,7 @@ void *producer(void *arg) {
     int prod_id = *(int *)arg; // Pass in the thread number as a void ptr
 
     // Each thread makes 10 expressions
-    for (int i = 0; i < THREAD_NUM; i++) {
+    for (int i = 0; i < EXPR_COUNT; i++) {
         //Make a random expression
         Expression expr = make_expression(prod_id); 
 
@@ -98,7 +100,7 @@ void *consumer(void *arg) {
     int id = *(int *)arg; // Pass in thread number as a void ptr
 
     // Each thread consumes 10 expressions
-    for (int i = 0; i < THREAD_NUM; i++) {  
+    for (int i = 0; i < EXPR_COUNT; i++) {  
         //Grab an expression from the buffer
         Expression expr = get_expression(); 
 
@@ -127,8 +129,9 @@ Expression get_expression() {
     pthread_cond_signal(&buffer.not_full); // Send a signal that the buffer is not full
 
     pthread_mutex_unlock(&buffer.mutex); // Unlock
-
+    
     return expr;
+
 }
 
 void add_expression(Expression expr) {
